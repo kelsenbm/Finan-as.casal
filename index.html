@@ -13,9 +13,9 @@
             --bg-principal: #0F0F12;
             --bg-card: #17171C;
             --bg-input: #22222A;
-            --cor-primaria: #39FF14;
-            --cor-secundaria: #FF3B30;
-            --cor-alerta: #FF9500; /* Laranja para limites atingidos */
+            --cor-primaria: #39FF14; /* Verde Receita */
+            --cor-base-gasto: #FF9500; /* Laranja Padrão */
+            --cor-alerta: #FF3B30; /* Vermelho Estourou */
             --cor-texto: #F5F5F7;
             --cor-mutada: #8E8E93;
             --fonte-titulo: 'Syne', sans-serif;
@@ -26,31 +26,45 @@
         .container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 20px; }
         header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
         h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
-        select { background: var(--bg-card); color: var(--cor-texto); border: 1px solid var(--bg-input); padding: 8px 12px; border-radius: 8px; font-family: var(--fonte-dados); cursor: pointer; }
+        
+        /* Estilos dos Selects e Inputs */
+        select, input { background: var(--bg-input); border: 1px solid transparent; color: var(--cor-texto); padding: 12px; border-radius: 8px; font-family: var(--fonte-dados); outline: none; }
+        select:focus, input:focus { border-color: var(--cor-mutada); }
+        #seletor-mes { background: var(--bg-card); border: 1px solid var(--bg-input); padding: 8px 12px; }
+
+        /* Cards estruturais */
         .card-meta { background: var(--bg-card); border-radius: 16px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.05); }
         .meta-info { display: flex; justify-content: space-between; margin-bottom: 12px; }
         .meta-info span { color: var(--cor-mutada); font-size: 0.9rem; }
         .meta-valores { font-family: var(--fonte-dados); font-size: 1.1rem; font-weight: bold; }
         .barra-progresso-bg { background: var(--bg-input); height: 12px; width: 100%; border-radius: 6px; overflow: hidden; }
-        .barra-progresso-fill { background: linear-gradient(90deg, var(--cor-secundaria), var(--cor-primaria)); height: 100%; width: 0%; transition: width 0.4s ease; }
+        .barra-progresso-fill { background: linear-gradient(90deg, var(--cor-base-gasto), var(--cor-primaria)); height: 100%; width: 0%; transition: width 0.4s ease; }
+        
         .grid-resumo { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .card-pequeno { background: var(--bg-card); padding: 15px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.03); }
         .card-pequeno p { font-size: 0.8rem; color: var(--cor-mutada); margin-bottom: 5px; }
         .card-pequeno span { font-family: var(--fonte-dados); font-size: 1.2rem; font-weight: 500; }
-        .card-form { background: var(--bg-card); border-radius: 16px; padding: 20px; }
+        .receita-valor { color: var(--cor-primaria); }
+        .despesa-valor { color: var(--cor-base-gasto); }
+
+        .card-form, .card-grafico, .lista-transacoes { background: var(--bg-card); border-radius: 16px; padding: 20px; }
         .form-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-        input, select.input-field { background: var(--bg-input); border: 1px solid transparent; color: var(--cor-texto); padding: 12px; border-radius: 8px; font-family: var(--fonte-dados); outline: none; }
-        input:focus { border-color: var(--cor-mutada); }
+        .titulo-secao { font-size: 1.1rem; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        
         button { background: var(--cor-texto); color: var(--bg-principal); border: none; padding: 14px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; transition: opacity 0.2s; }
         button:hover { opacity: 0.9; }
-        .card-grafico { background: var(--bg-card); border-radius: 16px; padding: 20px; }
-        .titulo-secao { font-size: 1.1rem; margin-bottom: 15px; }
-        .lista-transacoes { background: var(--bg-card); border-radius: 16px; padding: 20px; max-height: 250px; overflow-y: auto; }
+        .btn-secundario { background: var(--bg-input); color: var(--cor-texto); padding: 6px 12px; font-size: 0.8rem; width: auto; border-radius: 6px; }
+
+        /* Painel de Configuração de Limites Dinâmicos */
+        .painel-limites { background: #1E1E24; border-radius: 12px; padding: 15px; margin-top: 10px; display: none; flex-direction: column; gap: 10px; border: 1px solid var(--cor-base-gasto); }
+        .linha-limite { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-family: var(--fonte-dados); }
+        .linha-limite input { width: 90px; padding: 4px 8px; text-align: right; }
+
+        /* Lista de Lançamentos */
+        .lista-transacoes { max-height: 250px; overflow-y: auto; }
         .item-transacao { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--bg-input); font-family: var(--fonte-dados); font-size: 0.9rem; align-items: center; }
         .item-transacao:last-child { border-bottom: none; }
-        .receita-valor { color: var(--cor-primaria); }
-        .despesa-valor { color: var(--cor-secundaria); }
-        .btn-deletar { background: none; color: var(--cor-secundaria); border: none; width: auto; padding: 0 5px; cursor: pointer; font-size: 0.8rem; display: inline; margin-left: 8px; }
+        .btn-deletar { background: none; color: var(--cor-alerta); border: none; width: auto; padding: 0 5px; cursor: pointer; font-size: 0.8rem; display: inline; margin-left: 8px; }
     </style>
 </head>
 <body>
@@ -87,6 +101,18 @@
             <div class="card-pequeno">
                 <p>Gastos / Dívidas</p>
                 <span class="despesa-valor" id="resumo-meta">R$ 0,00</span>
+            </div>
+        </div>
+
+        <!-- Gerenciador de Limites direto na Tela -->
+        <div class="card-pequeno" style="border: 1px solid rgba(255,149,0,0.15)">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <p style="color: var(--cor-texto); font-weight:bold;">Definição de Teto de Gastos</p>
+                <button id="btn-toggle-limites" class="btn-secundario">⚙️ Ajustar Limites</button>
+            </div>
+            <div id="painel-limites" class="painel-limites">
+                <div id="container-inputs-limites"></div>
+                <button id="btn-salvar-limites" style="padding:8px; font-size:0.9rem; background: var(--cor-base-gasto); color:#fff;">Salvar Tetos do Mês</button>
             </div>
         </div>
 
