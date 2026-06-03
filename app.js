@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCkfRok8Rq6djP9Kbk0vYGTwHdtPWpQGSw",
@@ -13,28 +13,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🚨 DEFINAM OS LIMITES DE VOCÊS AQUI (Abaixo estão valores de exemplo, mude como quiserem!)
-const LIMITES_DESPESAS = {
-    "Dívidas": 2000,
-    "Mercado": 800,
-    "Despesas eventuais": 300,
-    "Compras": 400,
-    "Saúde": 500,
-    "Presentes": 200,
-    "Beleza": 150,
-    "Desenvolvimento": 300,
-    "Lazer": 300, // Seu exemplo de R$ 300 reais
-    "Assinaturas": 100,
-    "Transporte": 300,
-    "Peugeot 208": 600,
-    "Alimentação": 500,
-    "Habitação": 1500,
-    "Contas": 600
-};
-
-// Listas oficiais passadas por você
 const CATEGORIAS_RECEITA = ["Aluguel", "Motorista de app", "Seguro", "Vendas", "Marketing"];
-const CATEGORIAS_DESPESA = Object.keys(LIMITES_DESPESAS);
+const CATEGORIAS_DESPESA = [
+    "Dívidas", "Mercado", "Despesas eventuais", "Compras", "Saúde", 
+    "Presentes", "Beleza", "Desenvolvimento", "Lazer", "Assinaturas", 
+    "Transporte", "Peugeot 208", "Alimentação", "Habitação", "Contas"
+];
+
+// Objeto em memória para guardar os limites ativos do mês carregado
+let LIMITES_ATUAIS = {}; 
+CATEGORIAS_DESPESA.forEach(cat => LIMITES_ATUAIS[cat] = 0);
 
 const seletorMes = document.getElementById('seletor-mes');
 const formTransacao = document.getElementById('form-transacao');
@@ -46,36 +34,87 @@ const progressoTexto = document.getElementById('progresso-texto');
 const selectTipo = document.getElementById('tipo');
 const selectCategoria = document.getElementById('categoria');
 
+// Elementos do painel de limites
+const btnToggleLimites = document.getElementById('btn-toggle-limites');
+const painelLimites = document.getElementById('painel-limites');
+const containerInputsLimites = document.getElementById('container-inputs-limites');
+const btnSalvarLimites = document.getElementById('btn-salvar-limites');
+
 let graficoInstance = null;
 let unsubscribeEscuta = null;
 
 const formatarMoeda = (valor) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-// Altera as opções do select de categoria dependendo se escolheu Receita ou Despesa
+// Altera as opções do select de categoria de forma inteligente
 function atualizarSelectCategorias() {
     const tipo = selectTipo.value;
     selectCategoria.innerHTML = "";
-    
     const lista = tipo === 'receita' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA;
     lista.forEach(cat => {
         const opt = document.createElement('option');
-        opt.value = cat;
-        opt.innerText = cat;
+        opt.value = cat; opt.innerText = cat;
         selectCategoria.appendChild(opt);
     });
 }
 selectTipo.addEventListener('change', atualizarSelectCategorias);
-atualizarSelectCategorias(); // roda a primeira vez ao abrir o app
+atualizarSelectCategorias();
 
-function ligarSincronizacao(mesAno) {
+// Controla a abertura/fechamento do painel de configurações na tela
+btnToggleLimites.onclick = () => {
+    if(painelLimites.style.display === 'flex') {
+        painelLimites.style.display = 'none';
+    } else {
+        renderizarInputsLimites();
+        painelLimites.style.display = 'flex';
+    }
+};
+
+// Monta as caixas de texto com os limites salvos para edição
+function renderizarInputsLimites() {
+    containerInputsLimites.innerHTML = "";
+    CATEGORIAS_DESPESA.forEach(cat => {
+        const div = document.createElement('div');
+        div.className = 'linha-limite';
+        div.innerHTML = `
+            <span>${cat}:</span>
+            <input type="number" step="1" data-cat="${cat}" value="${LIMITES_ATUAIS[cat] || 0}">
+        `;
+        containerInputsLimites.appendChild(div);
+    });
+}
+
+// Salva os limites configurados direto no Firebase por mês correspondente
+btnSalvarLimites.onclick = async () => {
+    const mesAtual = seletorMes.value;
+    const novosLimites = {};
+    
+    containerInputsLimites.querySelectorAll('input').forEach(input => {
+        novosLimites[input.getAttribute('data-cat')] = parseFloat(input.value) || 0;
+    });
+
+    await setDoc(doc(db, "meses", mesAtual, "configuracoes", "limites"), novosLimites);
+    LIMITES_ATUAIS = novosLimites;
+    painelLimites.style.display = 'none';
+    ligarSincronizacao(mesAtual); // Recarrega os dados com as novas regras de cores
+};
+
+async function ligarSincronizacao(mesAno) {
+    // 1. Busca os limites salvos na nuvem para esse mês
+    const limiteDoc = await getDoc(doc(db, "meses", mesAno, "configuracoes", "limites"));
+    if(limiteDoc.exists()) {
+        LIMITES_ATUAIS = limiteDoc.data();
+    } else {
+        // Se não tiver nada salvo na nuvem ainda, define tudo como 0 provisoriamente
+        CATEGORIAS_DESPESA.forEach(cat => LIMITES_ATUAIS[cat] = 0);
+    }
+
+    // 2. Escuta as transações em tempo real
     if (unsubscribeEscuta) unsubscribeEscuta();
-
     const caminhoColecao = collection(db, "meses", mesAno, "transacoes");
     
     unsubscribeEscuta = onSnapshot(caminhoColecao, (snapshot) => {
         let receitas = 0;
         let despesasTotais = 0;
-        
         let categoriasGasto = {};
         CATEGORIAS_DESPESA.forEach(cat => categoriasGasto[cat] = 0);
 
@@ -88,7 +127,7 @@ function ligarSincronizacao(mesAno) {
             if (t.tipo === "receita") {
                 receitas += t.valor;
             } else {
-                despesasTotais += t.valor; // Agora TODAS as despesas entram na soma de Gastos/Dívidas
+                despesasTotais += t.valor;
                 if (categoriasGasto[t.categoria] !== undefined) {
                     categoriasGasto[t.categoria] += t.valor;
                 }
@@ -115,7 +154,6 @@ function ligarSincronizacao(mesAno) {
         resumoReceita.innerText = formatarMoeda(receitas);
         resumoMeta.innerText = formatarMoeda(despesasTotais);
 
-        // Progresso Inverso corrigido
         let percentual = 0;
         if (despesasTotais > 0) {
             percentual = Math.min((receitas / despesasTotais) * 100, 100); 
@@ -138,15 +176,16 @@ function ligarSincronizacao(mesAno) {
 
 function atualizarGrafico(dadosCategorias) {
     const ctx = document.getElementById('graficoCategorias').getContext('2d');
-    
-    // Filtra para mostrar no gráfico apenas categorias que já possuem algum gasto lançado (evita poluição visual)
     const labels = Object.keys(dadosCategorias).filter(cat => dadosCategorias[cat] > 0);
     const valores = labels.map(cat => dadosCategorias[cat]);
     
-    // 🚨 REGRA DO ALERTA VISUAL: Define a cor de cada barra individualmente
+    // 🎨 NOVA REGRA INVERTIDA: Laranja por padrão, Vermelho se estourar o limite definido na tela!
     const coresBarras = labels.map(cat => {
-        const limite = LIMITES_DESPESAS[cat] || 999999;
-        return dadosCategorias[cat] > limite ? '#FF9500' : '#FF3B30'; // Laranja se estourar, Vermelho se estiver ok
+        const limiteDefinido = LIMITES_ATUAIS[cat] || 0;
+        if (limiteDefinido > 0 && dadosCategorias[cat] > limiteDefinido) {
+            return '#FF3B30'; // Vermelho (Estourou!)
+        }
+        return '#FF9500'; // Laranja (Tudo nos conformes)
     });
 
     if (graficoInstance) {
@@ -179,7 +218,6 @@ function atualizarGrafico(dadosCategorias) {
 
 formTransacao.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
     const mesAtual = seletorMes.value;
     const novaTransacao = {
         descricao: document.getElementById('descricao').value,
@@ -192,7 +230,7 @@ formTransacao.addEventListener('submit', async (e) => {
     try {
         await addDoc(collection(db, "meses", mesAtual, "transacoes"), novaTransacao);
         formTransacao.reset();
-        atualizarSelectCategorias(); // Restaura as categorias corretas após o reset
+        atualizarSelectCategorias();
     } catch (error) {
         alert("Erro ao salvar: " + error.message);
     }
