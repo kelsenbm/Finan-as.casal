@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finanças em Casal 2026</title>
+    <title>Casal Rico 2026</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400..800&display=swap" rel="stylesheet">
@@ -15,6 +15,7 @@
             --bg-input: #22222A;
             --cor-primaria: #39FF14;
             --cor-secundaria: #FF3B30;
+            --cor-alerta: #FF9500; /* Laranja para limites atingidos */
             --cor-texto: #F5F5F7;
             --cor-mutada: #8E8E93;
             --fonte-titulo: 'Syne', sans-serif;
@@ -49,14 +50,14 @@
         .item-transacao:last-child { border-bottom: none; }
         .receita-valor { color: var(--cor-primaria); }
         .despesa-valor { color: var(--cor-secundaria); }
-        .btn-deletar { background: none; color: var(--cor-secundaria); border: none; width: auto; padding: 0 5px; cursor: pointer; font-size: 0.8rem; display: inline; }
+        .btn-deletar { background: none; color: var(--cor-secundaria); border: none; width: auto; padding: 0 5px; cursor: pointer; font-size: 0.8rem; display: inline; margin-left: 8px; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <header>
-            <h1>Nossas Finanças 2026</h1>
+            <h1>Casal Rico 2026</h1>
             <select id="seletor-mes">
                 <option value="06-2026">Junho / 2026</option>
                 <option value="07-2026">Julho / 2026</option>
@@ -84,7 +85,7 @@
                 <span class="receita-valor" id="resumo-receita">R$ 0,00</span>
             </div>
             <div class="card-pequeno">
-                <p>Meta Fixa / Dívidas</p>
+                <p>Gastos / Dívidas</p>
                 <span class="despesa-valor" id="resumo-meta">R$ 0,00</span>
             </div>
         </div>
@@ -93,20 +94,15 @@
             <h2 class="titulo-secao">Adicionar Registro</h2>
             <form id="form-transacao">
                 <div class="form-group">
-                    <input type="text" id="descricao" placeholder="Descrição (Ex: Salário, Mercado)" required>
+                    <input type="text" id="descricao" placeholder="Descrição (Ex: Uber, Mercado, Salário)" required>
                     <input type="number" id="valor" step="0.01" placeholder="Valor R$" required>
+                    
                     <select id="tipo" class="input-field">
-                        <option value="receita">Receita</option>
                         <option value="despesa">Despesa</option>
+                        <option value="receita">Receita</option>
                     </select>
-                    <select id="categoria" class="input-field">
-                        <option value="Dívidas/Fixa">Dívidas / Contas Fixas</option>
-                        <option value="Habitação">Habitação</option>
-                        <option value="Alimentação">Alimentação</option>
-                        <option value="Transporte">Transporte</option>
-                        <option value="Lazer">Lazer</option>
-                        <option value="Outros">Outros</option>
-                    </select>
+
+                    <select id="categoria" class="input-field"></select>
                 </div>
                 <button type="submit">Lançar no App</button>
             </form>
