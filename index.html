@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finanças em Casal 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400..800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-principal: #0F0F12;
+            --bg-card: #17171C;
+            --bg-input: #22222A;
+            --cor-primaria: #39FF14;
+            --cor-secundaria: #FF3B30;
+            --cor-texto: #F5F5F7;
+            --cor-mutada: #8E8E93;
+            --fonte-titulo: 'Syne', sans-serif;
+            --fonte-dados: 'DM Mono', monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--bg-principal); color: var(--cor-texto); font-family: var(--fonte-titulo); padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+        h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
+        select { background: var(--bg-card); color: var(--cor-texto); border: 1px solid var(--bg-input); padding: 8px 12px; border-radius: 8px; font-family: var(--fonte-dados); cursor: pointer; }
+        .card-meta { background: var(--bg-card); border-radius: 16px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .meta-info { display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .meta-info span { color: var(--cor-mutada); font-size: 0.9rem; }
+        .meta-valores { font-family: var(--fonte-dados); font-size: 1.1rem; font-weight: bold; }
+        .barra-progresso-bg { background: var(--bg-input); height: 12px; width: 100%; border-radius: 6px; overflow: hidden; }
+        .barra-progresso-fill { background: linear-gradient(90deg, var(--cor-secundaria), var(--cor-primaria)); height: 100%; width: 0%; transition: width 0.4s ease; }
+        .grid-resumo { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .card-pequeno { background: var(--bg-card); padding: 15px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.03); }
+        .card-pequeno p { font-size: 0.8rem; color: var(--cor-mutada); margin-bottom: 5px; }
+        .card-pequeno span { font-family: var(--fonte-dados); font-size: 1.2rem; font-weight: 500; }
+        .card-form { background: var(--bg-card); border-radius: 16px; padding: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        input, select.input-field { background: var(--bg-input); border: 1px solid transparent; color: var(--cor-texto); padding: 12px; border-radius: 8px; font-family: var(--fonte-dados); outline: none; }
+        input:focus { border-color: var(--cor-mutada); }
+        button { background: var(--cor-texto); color: var(--bg-principal); border: none; padding: 14px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+        .card-grafico { background: var(--bg-card); border-radius: 16px; padding: 20px; }
+        .titulo-secao { font-size: 1.1rem; margin-bottom: 15px; }
+        .lista-transacoes { background: var(--bg-card); border-radius: 16px; padding: 20px; max-height: 250px; overflow-y: auto; }
+        .item-transacao { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--bg-input); font-family: var(--fonte-dados); font-size: 0.9rem; align-items: center; }
+        .item-transacao:last-child { border-bottom: none; }
+        .receita-valor { color: var(--cor-primaria); }
+        .despesa-valor { color: var(--cor-secundaria); }
+        .btn-deletar { background: none; color: var(--cor-secundaria); border: none; width: auto; padding: 0 5px; cursor: pointer; font-size: 0.8rem; display: inline; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Nossas Finanças 2026</h1>
+            <select id="seletor-mes">
+                <option value="06-2026">Junho / 2026</option>
+                <option value="07-2026">Julho / 2026</option>
+                <option value="08-2026">Agosto / 2026</option>
+                <option value="09-2026">Setembro / 2026</option>
+                <option value="10-2026">Outubro / 2026</option>
+                <option value="11-2026">Novembro / 2026</option>
+                <option value="12-2026">Dezembro / 2026</option>
+            </select>
+        </header>
+
+        <div class="card-meta">
+            <div class="meta-info">
+                <span>Meta de Sobrevivência (Contas Cobertas)</span>
+                <span class="meta-valores" id="progresso-texto">0%</span>
+            </div>
+            <div class="barra-progresso-bg">
+                <div class="barra-progresso-fill" id="barra-fill"></div>
+            </div>
+        </div>
+
+        <div class="grid-resumo">
+            <div class="card-pequeno">
+                <p>Receita Total</p>
+                <span class="receita-valor" id="resumo-receita">R$ 0,00</span>
+            </div>
+            <div class="card-pequeno">
+                <p>Meta Fixa / Dívidas</p>
+                <span class="despesa-valor" id="resumo-meta">R$ 0,00</span>
+            </div>
+        </div>
+
+        <div class="card-form">
+            <h2 class="titulo-secao">Adicionar Registro</h2>
+            <form id="form-transacao">
+                <div class="form-group">
+                    <input type="text" id="descricao" placeholder="Descrição (Ex: Salário, Mercado)" required>
+                    <input type="number" id="valor" step="0.01" placeholder="Valor R$" required>
+                    <select id="tipo" class="input-field">
+                        <option value="receita">Receita</option>
+                        <option value="despesa">Despesa</option>
+                    </select>
+                    <select id="categoria" class="input-field">
+                        <option value="Dívidas/Fixa">Dívidas / Contas Fixas</option>
+                        <option value="Habitação">Habitação</option>
+                        <option value="Alimentação">Alimentação</option>
+                        <option value="Transporte">Transporte</option>
+                        <option value="Lazer">Lazer</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+                <button type="submit">Lançar no App</button>
+            </form>
+        </div>
+
+        <div class="card-grafico">
+            <h2 class="titulo-secao">Distribuição de Gastos</h2>
+            <canvas id="graficoCategorias" width="400" height="200"></canvas>
+        </div>
+
+        <div class="lista-transacoes">
+            <h2 class="titulo-secao">Lançamentos do Mês</h2>
+            <div id="container-transacoes"></div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
