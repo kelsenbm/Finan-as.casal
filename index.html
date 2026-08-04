@@ -18,6 +18,8 @@
             --cor-alerta: #FF3B30; /* Vermelho Estourou */
             --cor-texto: #F5F5F7;
             --cor-mutada: #8E8E93;
+            --cor-parceiro-1: #007AFF; /* Azul Ele */
+            --cor-parceiro-2: #FF2D55; /* Rosa Ela */
             --fonte-titulo: 'Syne', sans-serif;
             --fonte-dados: 'DM Mono', monospace;
         }
@@ -27,12 +29,10 @@
         header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
         h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
         
-        /* Estilos dos Selects e Inputs */
         select, input { background: var(--bg-input); border: 1px solid transparent; color: var(--cor-texto); padding: 12px; border-radius: 8px; font-family: var(--fonte-dados); outline: none; }
         select:focus, input:focus { border-color: var(--cor-mutada); }
         #seletor-mes { background: var(--bg-card); border: 1px solid var(--bg-input); padding: 8px 12px; }
 
-        /* Cards estruturais */
         .card-meta { background: var(--bg-card); border-radius: 16px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.05); }
         .meta-info { display: flex; justify-content: space-between; margin-bottom: 12px; }
         .meta-info span { color: var(--cor-mutada); font-size: 0.9rem; }
@@ -49,21 +49,25 @@
 
         .card-form, .card-grafico, .lista-transacoes { background: var(--bg-card); border-radius: 16px; padding: 20px; }
         .form-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .titulo-secao { font-size: 1.1rem; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         
         button { background: var(--cor-texto); color: var(--bg-principal); border: none; padding: 14px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; transition: opacity 0.2s; }
         button:hover { opacity: 0.9; }
         .btn-secundario { background: var(--bg-input); color: var(--cor-texto); padding: 6px 12px; font-size: 0.8rem; width: auto; border-radius: 6px; }
 
-        /* Painel de Configuração de Limites Dinâmicos */
         .painel-limites { background: #1E1E24; border-radius: 12px; padding: 15px; margin-top: 10px; display: none; flex-direction: column; gap: 10px; border: 1px solid var(--cor-base-gasto); }
-        .linha-limite { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-family: var(--fonte-dados); }
-        .linha-limite input { width: 90px; padding: 4px 8px; text-align: right; }
 
-        /* Lista de Lançamentos */
-        .lista-transacoes { max-height: 250px; overflow-y: auto; }
-        .item-transacao { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--bg-input); font-family: var(--fonte-dados); font-size: 0.9rem; align-items: center; }
+        .lista-transacoes { max-height: 300px; overflow-y: auto; }
+        .item-transacao { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--bg-input); font-family: var(--fonte-dados); font-size: 0.9rem; align-items: center; }
         .item-transacao:last-child { border-bottom: none; }
+        
+        /* Badges de Atribuição de Casal */
+        .badge-pessoa { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-family: var(--fonte-titulo); text-transform: uppercase; font-weight: bold; }
+        .badge-ele { background: rgba(0, 122, 255, 0.2); color: var(--cor-parceiro-1); }
+        .badge-ela { background: rgba(255, 45, 85, 0.2); color: var(--cor-parceiro-2); }
+        .badge-casal { background: rgba(57, 255, 20, 0.2); color: var(--cor-primaria); }
+
         .btn-deletar { background: none; color: var(--cor-alerta); border: none; width: auto; padding: 0 5px; cursor: pointer; font-size: 0.8rem; display: inline; margin-left: 8px; }
     </style>
 </head>
@@ -75,7 +79,7 @@
             <select id="seletor-mes">
                 <option value="06-2026">Junho / 2026</option>
                 <option value="07-2026">Julho / 2026</option>
-                <option value="08-2026">Agosto / 2026</option>
+                <option value="08-2026" selected>Agosto / 2026</option>
                 <option value="09-2026">Setembro / 2026</option>
                 <option value="10-2026">Outubro / 2026</option>
                 <option value="11-2026">Novembro / 2026</option>
@@ -83,9 +87,10 @@
             </select>
         </header>
 
+        <!-- Barra de Cobertura do Orçamento -->
         <div class="card-meta">
             <div class="meta-info">
-                <span>Meta de Sobrevivência (Contas Cobertas)</span>
+                <span>Orçamento do Casal Consumido</span>
                 <span class="meta-valores" id="progresso-texto">0%</span>
             </div>
             <div class="barra-progresso-bg">
@@ -93,18 +98,31 @@
             </div>
         </div>
 
+        <!-- Resumo Geral e Divisão do Casal -->
         <div class="grid-resumo">
             <div class="card-pequeno">
-                <p>Receita Total</p>
+                <p>Receita Total do Casal</p>
                 <span class="receita-valor" id="resumo-receita">R$ 0,00</span>
             </div>
             <div class="card-pequeno">
-                <p>Gastos / Dívidas</p>
+                <p>Gastos Totais do Mês</p>
                 <span class="despesa-valor" id="resumo-meta">R$ 0,00</span>
             </div>
         </div>
 
-        <!-- Gerenciador de Limites direto na Tela -->
+        <!-- Visão por Pessoa (Essencial para Casais) -->
+        <div class="grid-resumo">
+            <div class="card-pequeno" style="border-left: 3px solid var(--cor-parceiro-1);">
+                <p>Gastos do Esposo</p>
+                <span style="color: var(--cor-parceiro-1);" id="gasto-ele">R$ 0,00</span>
+            </div>
+            <div class="card-pequeno" style="border-left: 3px solid var(--cor-parceiro-2);">
+                <p>Gastos da Esposa</p>
+                <span style="color: var(--cor-parceiro-2);" id="gasto-ela">R$ 0,00</span>
+            </div>
+        </div>
+
+        <!-- Gerenciador de Limites -->
         <div class="card-pequeno" style="border: 1px solid rgba(255,149,0,0.15)">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <p style="color: var(--cor-texto); font-weight:bold;">Definição de Teto de Gastos</p>
@@ -116,17 +134,36 @@
             </div>
         </div>
 
+        <!-- Formulário de Lançamento Completo -->
         <div class="card-form">
             <h2 class="titulo-secao">Adicionar Registro</h2>
             <form id="form-transacao">
                 <div class="form-group">
-                    <input type="text" id="descricao" placeholder="Descrição (Ex: Uber, Mercado, Salário)" required>
-                    <input type="number" id="valor" step="0.01" placeholder="Valor R$" required>
+                    <input type="text" id="descricao" placeholder="Descrição (Ex: Mercado, Uber, Salário)" required>
                     
-                    <select id="tipo" class="input-field">
-                        <option value="despesa">Despesa</option>
-                        <option value="receita">Receita</option>
-                    </select>
+                    <div class="form-row">
+                        <input type="number" id="valor" step="0.01" placeholder="Valor R$" required>
+                        <select id="tipo" class="input-field">
+                            <option value="despesa">Despesa</option>
+                            <option value="receita">Receita</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <!-- Quem realizou a transação -->
+                        <select id="responsavel" class="input-field" required>
+                            <option value="" disabled selected>Quem pagou/ganhou?</option>
+                            <option value="ele">Esposo</option>
+                            <option value="ela">Esposa</option>
+                            <option value="casal">Conta Conjunta / Casa</option>
+                        </select>
+
+                        <!-- Método de Pagamento -->
+                        <select id="metodo-pagamento" class="input-field">
+                            <option value="pix">PIX / Débito</option>
+                            <option value="cartao">Cartão de Crédito</option>
+                        </select>
+                    </div>
 
                     <select id="categoria" class="input-field"></select>
                 </div>
